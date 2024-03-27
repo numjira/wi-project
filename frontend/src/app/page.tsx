@@ -26,6 +26,7 @@ import {
   EditOutlined,
   DeleteOutlined,
   CloseOutlined,
+  QuestionCircleOutlined
 } from "@ant-design/icons";
 import type { UploadProps, UploadFile } from "antd";
 import environment from "@/app/utils/environment";
@@ -795,7 +796,15 @@ const App: React.FC = () => {
                 },
               }}
               dataSource={data}
-              columns={mergedColumns}
+              // columns={mergedColumns}
+              columns={mergedColumns.map(column => ({
+                ...column,
+                title: column.title === "PLC data" ? (
+                  <Tooltip title="ข้อมูลจาก PLC ของกระบวนการผลิตชิ้นงาน">
+                    <span>PLC data <QuestionCircleOutlined /></span>
+                  </Tooltip>
+                ) : column.title
+              }))}
               onRow={(record) => ({
                 onClick: async () => {
                   console.log(record);
