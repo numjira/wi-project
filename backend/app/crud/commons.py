@@ -6,12 +6,8 @@ from app.schemas.commons import (
 DataInitals,DataWi,delete_a_row
 )
 
-
-
 def convert_result(res):
     return [{c: getattr(r, c) for c in res.keys()} for r in res]
-
-
 class CommonsCRUD:
     def __init__(self):
         pass
@@ -56,34 +52,31 @@ class CommonsCRUD:
         except Exception as e:
             raise e
     
-    
     async def get_linename(
         self,db: AsyncSession,
     ):
         try:
             stmt = f"""
-        SELECT line_name FROM wi_process
+        SELECT line_name FROM linename
         """
             rs = await db.execute(text(stmt))
             return rs
         except Exception as e:
             raise e
 
-
     async def get_process(self,line_name: str,
         db: AsyncSession,
     ):
         try:
             stmt = f"""
-        SELECT process FROM wi_process
+        SELECT process FROM process
         WHERE line_name = :line_name ;
         """
             rs = await db.execute(text(stmt),{"line_name": line_name})
             return rs
         except Exception as e:
             raise e
-    
-
+    4
     async def get_part_number(self,line_name: str,process:str,
         db: AsyncSession,
     ):
@@ -97,7 +90,6 @@ class CommonsCRUD:
         except Exception as e:
             raise e
         
-    
     async def get_wi_table(self,line_name: str,process:str,
                         #    part_number:str,
         db: AsyncSession,
@@ -114,7 +106,6 @@ class CommonsCRUD:
         except Exception as e:
             raise e
     
-
     async def post_edit_data(self,db: AsyncSession,item:DataWi):
         try:
             stmt = f"""

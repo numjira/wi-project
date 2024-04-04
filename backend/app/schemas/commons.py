@@ -1,10 +1,10 @@
-from pydantic import BaseModel, Extra
+from pydantic import BaseModel
 from typing import Optional, List, Dict, Any, Union
 import datetime
 
 
 class DataInitals(BaseModel):
-    id:int
+    id: int
     part_no:str
     plc_data:str
     updated_at:Optional[datetime.datetime]
@@ -16,12 +16,11 @@ class DataInitalsResponse(BaseModel):
 
 ################################################
 class DataWi(BaseModel):
-    id:int
+    id: int
     line_name:str
     process:str
     part_number:str
     plc_data:str
-    # image_path:str
     image_path:Optional[List[Dict[str,Any]]] = None
     update_time:str
 
@@ -54,7 +53,7 @@ class part_number_data(BaseModel):
 #############################
     
 class wi_table(BaseModel):
-    id:int
+    id: int
     part_number:str
     plc_data:str
     image_path:Optional[List[Dict[str,Any]]] = None

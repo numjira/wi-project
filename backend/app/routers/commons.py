@@ -6,7 +6,7 @@ import json
 import string
 import os
 from app.schemas.commons import (
-    DataInitalsResponse,DataInitals,ListDataWi,DataWi,LineName, process_data,process_dataResponse,part_number_data,wi_table,delete_a_row
+    DataInitalsResponse,DataInitals,DataWi,LineName,process_dataResponse,part_number_data,wi_table,delete_a_row
 )
 from app.manager import CommonsManager
 from app.functions import api_key_auth
@@ -95,7 +95,7 @@ def commons_routers(db: AsyncGenerator) -> APIRouter:
     async def get_wi_table(line_name=str,process=str,part_number=str,db: AsyncSession = Depends(db)):
         try:
             wi_table = await manager.get_wi_table(line_name=line_name,process=process,db=db)
-            # ,part_number=part_number
+            
             return list(wi_table)
         except Exception as e:
             raise HTTPException(
@@ -159,7 +159,7 @@ def commons_routers(db: AsyncGenerator) -> APIRouter:
             raise HTTPException(
                 status_code=400, detail=f"Error during update : {e}"
             )
-
+        
 
     @router.post("/upload", response_model=List[dict])
     async def create_upload_file(file_uploads: list[UploadFile]):
@@ -167,11 +167,7 @@ def commons_routers(db: AsyncGenerator) -> APIRouter:
         for file_upload in file_uploads:
             try:
                 data = await file_upload.read()
-                rd = "".join(
-                    random.SystemRandom().choice(string.ascii_uppercase + string.digits)
-                    for _ in range(8)
-                )
-                file_name = f"{rd}_{file_upload.filename}"
+                file_name = f"{file_upload.filename}"
                 file_path = os.path.join("uploaded_files", file_name)
                 with open(file_path, "wb") as f:
                     f.write(data)
@@ -183,7 +179,6 @@ def commons_routers(db: AsyncGenerator) -> APIRouter:
                     status_code=500, detail=f"Error processing file: {str(e)}"
                 )
         return file_info_list
-
 
     return router
 

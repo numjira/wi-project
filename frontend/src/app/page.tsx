@@ -3,13 +3,11 @@ import React, { useState, useEffect } from "react";
 import {
   Button,
   Input,
-  Modal,
   Table,
   Form,
   Select,
   InputNumber,
   Popconfirm,
-  Typography,
   Popover,
   Upload,
   message,
@@ -17,7 +15,6 @@ import {
   Tooltip,
 } from "antd";
 import FormItem from "antd/es/form/FormItem";
-// import Image from "next/image";
 import {
   UploadOutlined,
   PlusOutlined,
@@ -26,15 +23,14 @@ import {
   EditOutlined,
   DeleteOutlined,
   CloseOutlined,
-  QuestionCircleOutlined
+  QuestionCircleOutlined,
 } from "@ant-design/icons";
 import type { UploadProps, UploadFile } from "antd";
 import environment from "@/app/utils/environment";
 import axiosInstance from "@/app/utils/axios";
 
 const { Search } = Input;
-
-//this code from ant D
+//this code from antd
 const EditableCell: React.FC<EditableCellProps> = ({
   editing,
   dataIndex,
@@ -48,6 +44,7 @@ const EditableCell: React.FC<EditableCellProps> = ({
   const inputNode = inputType === "number" ? <InputNumber /> : <Input />;
 
   return (
+    //input part number ,plac data in table
     <td {...restProps}>
       {editing ? (
         <Form.Item
@@ -83,6 +80,7 @@ const App: React.FC = () => {
   const [uploadList, set_uploadlist] = useState<UploadFile[]>([]);
   const [default_image, set_defult_image] = useState<any>([]);
   const [searchText, set_search_text] = useState("");
+  const [isDisabled, setDisabled] = useState(true);
 
   //**********************upload image***************************
   const props: UploadProps = {
@@ -104,14 +102,16 @@ const App: React.FC = () => {
 
   //**********************set time thailand***************************
   const currentDate = new Date();
-  const time_thai = `${currentDate.getFullYear()}-${String(
-    currentDate.getMonth() + 1
-  ).padStart(2, "0")}-${String(currentDate.getDate()).padStart(
+  const time_thai = `${String(currentDate.getDate()).padStart(2, "")} ${
+    ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+    [currentDate.getMonth()]
+  } ${currentDate.getFullYear()} ${String(
+    currentDate.getHours()
+  ).padStart(2, "0")} : ${String(currentDate.getMinutes()).padStart(
     2,
     "0"
-  )} ${String(currentDate.getHours()).padStart(2, "0")}:${String(
-    currentDate.getMinutes()
-  ).padStart(2, "0")}:${String(currentDate.getSeconds()).padStart(2, "0")}`;
+  )} : ${String(currentDate.getSeconds()).padStart(2, "0")}`;
+  // console.log(time_thai);
 
   useEffect(() => {
     console.log("Data on table :", data);
@@ -149,17 +149,18 @@ const App: React.FC = () => {
       image_path: savedItem.image_path,
       update_time: time_thai,
     };
-    // console.log("Edit Data : ", upsertItem);
+    
     //if click add_row_click do post , if not do update
     if (add_row_click) {
       post_edit_data(upsertItem);
       set_add_row_click(false); // Reset the flag after processing
-      console.log("Post Data: ", upsertItem);
+        console.log("Post Data: ", upsertItem);
     } else {
       update_row(upsertItem);
-      console.log("Put Data : ", upsertItem);
+        console.log("Put Data : ", upsertItem);
     }
   };
+
   //func. save row
   const save = async (key: React.Key) => {
     try {
@@ -181,12 +182,10 @@ const App: React.FC = () => {
         }
 
         const { key: omitKey, ...savedItem } = updatedItem;
-        // console.log("Saved Item:", savedItem);
-
-        newData.splice(index, 1, updatedItem);
-        set_data(newData);
-        set_editing_key("");
-        // console.log(uploadList);
+          newData.splice(index, 1, updatedItem);
+          set_data(newData);
+          set_editing_key("");
+          // console.log(uploadList);
 
         if (uploadList.length < 1) {
           savetoDb(savedItem, savedItem.image_path);
@@ -196,10 +195,7 @@ const App: React.FC = () => {
             uploadList.forEach((file) => {
               formData.append("file_uploads", file.originFileObj as File);
             });
-            const response = await axiosInstance.post(
-              "/commons/upload",
-              formData
-            );
+            const response = await axiosInstance.post("/commons/upload",formData);
             if (response.status === 200) {
               savetoDb(savedItem, response.data);
             }
@@ -215,9 +211,13 @@ const App: React.FC = () => {
 
   //*********************detect state for change the image when upload on table**************************
   useEffect(() => {
-    showData();
+    if (form.getFieldValue("LineName") !== undefined) {
+      showData();
+    } else {
+    }
     console.log("image change");
-  }, [default_image]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [default_image]);
 
   //**********************API response (get_linename)**************************
   const fetch_linename = async () => {
@@ -240,20 +240,27 @@ const App: React.FC = () => {
   const LineNameChange = async (value: string) => {
     try {
       const line_name = form.getFieldValue("LineName");
-      const response_process = await axiosInstance.get("/commons/get_process", {
-        params: {
-          line_name: line_name,
-        },
-      });
+      const response_process = await axiosInstance.get(
+        `/commons/get_process?line_name=${line_name}`
+      );
+      // const response_process = await axiosInstance.get(`/commons/get_process?line_name=${line_name}`);
       if (response_process.status === 200) {
         set_process(response_process.data.process_name);
-        // console.log("Process", Process);
       }
-      // console.log(`selected ${value}`);
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) {}
   };
+
+  useEffect(() => {
+    if (form.getFieldValue("LineName") === undefined) {
+      setDisabled(true);
+      form.resetFields(["Process"]);
+    } else {
+      form.resetFields(["Process"]);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.getFieldValue("LineName")]);
+
+
 
   //**********************API response (get_part_number)**************************
   const PartNumberChange = async (value: string) => {
@@ -279,7 +286,7 @@ const App: React.FC = () => {
       console.error(err);
     }
   };
-
+  // /////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //***************API post (post_edit_data)**********condition for post use with add row (true)***********
   const post_edit_data = async (upsertItem: EditData) => {
     try {
@@ -289,7 +296,10 @@ const App: React.FC = () => {
       );
       if (response.status === 200) {
         message.success("Post successfully");
-      } 
+        
+      } else {
+        
+      }
     } catch (error) {
       console.error("Error post data:", error);
     }
@@ -301,11 +311,12 @@ const App: React.FC = () => {
       const response = await axiosInstance.post("/commons/delete_row", id);
       if (response.status === 200) {
         message.success("Delete successfully");
-      } 
+      }
     } catch (error) {
       console.error("Error delete data:", error);
     }
   };
+
   //**********************API update (put_edit_wi)*****condition for post use with edit (true), add row(false)**********
   const update_row = async (upsertItem: UpData) => {
     console.log("Update Row:", upsertItem);
@@ -316,7 +327,7 @@ const App: React.FC = () => {
       );
       if (response.status === 200) {
         message.success("Update successfully");
-      } 
+      }
     } catch (error) {
       console.error("Error delete data:", error);
     }
@@ -336,6 +347,7 @@ const App: React.FC = () => {
     return isUnique;
   });
 
+  //get data in table ex.image path, plc data, part no., uddate time etc.
   const showData = async () => {
     const line_name = form.getFieldValue("LineName") || "0";
     const process = form.getFieldValue("Process") || "0";
@@ -345,18 +357,21 @@ const App: React.FC = () => {
       params: {
         line_name: line_name,
         process: process,
-        // part_number: part_number,
       },
     });
-    if (responsedata.status === 200) {
+    if (responsedata.status === 200 && line_name != 0 && process != 0) {
       const dataWithKeys = responsedata.data.map(
         (item: any, index: number) => ({
           key: (index + 1).toString(),
           ...item,
         })
       );
+      message.success("Show Data Successfully");
       set_data(dataWithKeys);
-      // console.log("data on table :", dataWithKeys);
+      setDisabled(false);
+    } else {
+      setDisabled(true);
+      message.error("Data Not Found ");
     }
 
     if (response_wi.status === 200) {
@@ -376,23 +391,23 @@ const App: React.FC = () => {
   };
 
   const onAddButtonClick = () => {
-    const newId = maxId + 1;
-    const newData: Item = {
-      key: String(data.length + 1),
-      id: newId,
-      part_number: "",
-      plc_data: "",
-      image_path: [], //default_image
-      update_time: time_thai,
-    };
-    set_data([...data, newData]);
-  };
+    if (!editingKey) {
+      const newId = maxId + 1;
+      const newData: Item = {
+        key: String(data.length + 1),
+        id: newId,
+        part_number: "",
+        plc_data: "",
+        image_path: [], //default_image
+        update_time: time_thai,
+      };
+      set_data([...data, newData]);
+      set_editing_key(newData.key);
+    }};
 
   const onSaveButtonClick = async (record: any) => {
     set_show_upload(false);
     save(record.key);
-    // console.log("add",add_row_click)
-    // console.log("show up",show_upload)
   };
 
   const columns = [
@@ -464,10 +479,9 @@ const App: React.FC = () => {
               <Tooltip title="Upload Image">
                 <Upload {...props}>
                   <Button
+                    type="primary"
                     style={{
-                      background: "#5c5eff",
-                      color: "white",
-                      boxShadow: "5px 5px 20px 0px rgba(5, 50, 50, .5)",
+                      boxShadow: "5px 5px 20px 0px",
                       width: "80px",
                     }}
                     icon={<UploadOutlined />}
@@ -490,7 +504,7 @@ const App: React.FC = () => {
     {
       title: "Action",
       dataIndex: "action",
-      width: 150,
+      width: 200,
       render: (_: any, record: Item) => {
         const editable = isEditing(record);
         return (
@@ -500,14 +514,12 @@ const App: React.FC = () => {
             {editable ? (
               <span>
                 <Tooltip title="Save">
-                  <Typography.Link
+                  <Button
+                    type="primary"
                     onClick={() => onSaveButtonClick(record)}
                     style={{
-                      backgroundColor: "#68c3cf",
-                      boxShadow: "3px 3px 10px 0px #16656f",
-                      borderRadius: "20px",
-                      padding: "10px",
-                      color: "white",
+                      boxShadow: "3px 3px 10px ",
+                      width: "50px",
                       marginRight: "10px",
                     }}
                     className="fa fa-save"
@@ -515,50 +527,45 @@ const App: React.FC = () => {
                     <SaveOutlined
                       style={{ fontSize: "20px", textAlign: "center" }}
                     />
-                  </Typography.Link>
+                  </Button>
                 </Tooltip>
 
                 <Tooltip title="Cancel">
-                  <Typography.Link
+                  <Button
+                    type="primary"
                     onClick={cancel}
                     style={{
-                      backgroundColor: "#cfc768",
-                      boxShadow: "3px 3px 10px 0px #746b0a",
-                      borderRadius: "20px",
-                      padding: "10px",
-                      color: "white",
+                      boxShadow: "3px 3px 10px 0px",
+                      width: "50px",
                       marginLeft: "10px",
                     }}
                   >
                     <CloseOutlined style={{ fontSize: "20px" }} />
-                  </Typography.Link>
+                  </Button>
                 </Tooltip>
               </span>
             ) : (
               <span style={{ borderWidth: "200px" }}>
                 <Tooltip title="Edit">
-                  <Typography.Link
+                  <Button
+                    type="primary"
                     disabled={editingKey !== "" && editingKey !== record.key}
                     onClick={() => {
                       edit(record);
                       set_show_upload(!show_upload);
                     }}
                     style={{
-                      backgroundColor: "#139a40",
-                      boxShadow: "3px 3px 10px 0px #0b430f",
-                      borderRadius: "20px",
-                      padding: "10px",
-                      color: "white",
+                      boxShadow: "3px 3px 10px 0px",
+                      width: "50px",
                       marginRight: "10px",
                     }}
                   >
                     <EditOutlined style={{ fontSize: "20px" }} />
-                  </Typography.Link>
+                  </Button>
                 </Tooltip>
 
                 <Tooltip title="Delete">
                   <Popconfirm
-                    disabled={editingKey !== "" && editingKey !== record.key}
                     title="Sure to delete?"
                     onConfirm={async () => {
                       const ID = {
@@ -568,18 +575,19 @@ const App: React.FC = () => {
                       delete_row(ID);
                     }}
                   >
-                    <a
+                    <Button
+                      type="primary"
+                      danger
+                      disabled={editingKey !== "" && editingKey !== record.key}
                       style={{
-                        backgroundColor: "#ff4646",
-                        boxShadow: "3px 3px 10px 0px #570c0c",
-                        borderRadius: "20px",
-                        padding: "10px",
-                        color: "white",
+                        boxShadow: "3px 3px 10px 0px",
+                        width: "50px",
+
                         marginLeft: "10px",
                       }}
                     >
                       <DeleteOutlined style={{ fontSize: "20px" }} />
-                    </a>
+                    </Button>
                   </Popconfirm>
                 </Tooltip>
               </span>
@@ -618,13 +626,12 @@ const App: React.FC = () => {
           className="selector"
           style={{
             borderRadius: "5px",
-            // boxShadow: "5px 5px 20px 0px rgba(50, 50, 50, .5)",
+
             border: "solid lightgray 2px",
             flex: "1",
             display: "flex",
             flexDirection: "column",
-            // width: 900,
-            // height: 150,
+
             backgroundColor: "white",
             alignItems: "center",
             justifyContent: "center",
@@ -652,7 +659,8 @@ const App: React.FC = () => {
                 placeholder="Select a LineName"
                 style={{ width: 250 }}
                 onSelect={LineNameChange}
-                // onChange={LineNameChange}
+                onChange={LineNameChange}
+                allowClear
                 // options={uniqueLineName}
               >
                 {distinct_line_name.map((item: any) => (
@@ -691,14 +699,16 @@ const App: React.FC = () => {
 
             <FormItem
               name="monitor_id"
+              style={{}}
               label={
                 <span className="custom-label" style={{ fontSize: 20 }}>
                   Monitor Id
                 </span>
               }
             >
-              <span style={{ fontSize: 20, fontWeight: "bold", color: "red" }}>
-                {" "}
+              {/*Dispaly show*/}
+              <span style={{ fontSize: 20, fontWeight: "bold", color: "red", }}>
+                {""}
                 {(() => {
                   const processDisplay = form.getFieldValue("Process");
                   switch (processDisplay) {
@@ -706,18 +716,18 @@ const App: React.FC = () => {
                       return "Display 1 (RA 1)";
                     case "Clutch & Pinion assembly":
                       return "Display 2 (RA 2)";
-                    case "Magnetic sw. assembly":
+                    case "Magnetic SW. assembly":
                       return "Display 3 (RA 3)";
                     case "Armature & Yoke assembly":
                       return "Display 4 (RA 4)";
-                    case "End frame assembly":
+                    case "End Frame assembly":
                       return "Display 4 (RA 4)";
                     case "Cover assembly":
                       return "Display 4 (RA 4)";
                     case "Bolt Through assembly":
                       return "Display 4 (RA 4)";
                     default:
-                      return null;
+                      return "No Display Show";
                   }
                 })()}
               </span>
@@ -731,13 +741,12 @@ const App: React.FC = () => {
               }}
             >
               <Button
+                type="primary"
                 onClick={showData}
                 htmlType="submit"
                 style={{
                   fontSize: 15,
-                  color: "white",
-                  backgroundColor: "#5c5eff",
-                  boxShadow: "3px 3px 10px 0px #0e2563",
+                  boxShadow: "3px 3px 10px 0px ",
                 }}
               >
                 {" "}
@@ -765,18 +774,18 @@ const App: React.FC = () => {
               onSearch={(value) => set_search_text(value)}
               allowClear
             />
-            <Tooltip title="Add a row">
+            <Tooltip title="Add row">
               <Button
+                type="primary"
                 onClick={() => {
                   onAddButtonClick();
                   set_add_row_click(true);
                 }}
-                type="primary"
                 style={{
-                  backgroundColor: "#5c5eff",
-                  boxShadow: "3px 3px 10px 0px #0e2563",
+                  boxShadow: "3px 3px 10px 0px",
                 }}
                 icon={<PlusOutlined />}
+                disabled={isDisabled}
               >
                 Add
               </Button>
@@ -793,17 +802,22 @@ const App: React.FC = () => {
               components={{
                 body: {
                   cell: EditableCell,
-                },
+                }
               }}
               dataSource={data}
               // columns={mergedColumns}
-              columns={mergedColumns.map(column => ({
+              columns={mergedColumns.map((column) => ({
                 ...column,
-                title: column.title === "PLC data" ? (
-                  <Tooltip title="ข้อมูลจาก PLC ของกระบวนการผลิตชิ้นงาน">
-                    <span>PLC data <QuestionCircleOutlined /></span>
-                  </Tooltip>
-                ) : column.title
+                title:
+                  column.title === "PLC data" ? (
+                    <Tooltip title="ข้อมูลจาก PLC ของกระบวนการผลิตชิ้นงาน">
+                      <span>
+                        PLC data <QuestionCircleOutlined />
+                      </span>
+                    </Tooltip>
+                  ) : (
+                    column.title
+                  ),
               }))}
               onRow={(record) => ({
                 onClick: async () => {
@@ -812,9 +826,9 @@ const App: React.FC = () => {
               })}
               rowClassName="editable-row"
               pagination={false}
-              scroll={{ y: 550 }}
+              scroll={{ y: 590 }}
               rowKey={(record) => record.key}
-              style={{ paddingBottom: "0.5rem" }}
+              style={{ paddingBottom: "0.5rem"}}
             />
           </div>
         </Form>

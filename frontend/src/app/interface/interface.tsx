@@ -18,6 +18,7 @@ interface EditableCellProps extends React.HTMLAttributes<HTMLElement> {
 }
 
 type EditData = {
+  
   line_name: any;
   process: any;
   part_number: string;

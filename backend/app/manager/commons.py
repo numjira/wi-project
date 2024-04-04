@@ -67,7 +67,7 @@ class CommonsManager:
         self,
         db: AsyncSession = None,
     ):
-        res = await self.crud.get_wi_data(db=db)
+        res = await self.crud.get_linename(db=db)
         return_list = []
         for r in res:
             key_index = r._key_to_index
@@ -150,7 +150,6 @@ class CommonsManager:
         print("edit",item)
         await self.crud.post_edit_data(db=db, item=item)
         return True
-    
 
     async def delete_row(
         self,
